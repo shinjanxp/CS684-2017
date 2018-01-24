@@ -9,6 +9,7 @@
 #include "driverlib/gpio.h"
 #include "driverlib/timer.h"
 #include "inc/hw_gpio.h"
+#include "switches.h"
 //#include "inc/hw_ints.h"
 /**
  * main.c
@@ -16,17 +17,34 @@
 #define DELAY_MS(x) (SysCtlDelay(6700000/500*x))
 #define DELAY_US(x) (SysCtlDelay(6700000/500000*x))
 
-int flag=0,sw2Status=0;
 uint8_t ui8PinData=2;
-bool sw1Activation=0, sw2Activation=0;
 
-enum state{
-    idle,
-    press,
-    release
-};
+void switch1PressAction(sw* s){
+    if(ui8PinData==8) {ui8PinData=2;} else {ui8PinData=ui8PinData*2;}
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, ui8PinData);
 
-enum state sw1State, sw2State;
+}
+void dummy(sw* s){
+    return 0;
+}
+void switch1LongPressAction(sw* s){
+
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, ui8PinData);
+//    Delay for a bit
+    DELAY_MS(500);
+//    Turn off LED
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, 0);
+//    Delay
+    DELAY_MS(500);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, ui8PinData);
+}
+
+void switch2PressAction(sw* s){
+    s->swStatus++;
+}
+sw sw1 = {1,GPIO_PORTF_BASE,GPIO_PIN_4,idle,0,false,0,&switch1PressAction,&dummy,&switch1PressAction};
+sw sw2 = {2,GPIO_PORTF_BASE,GPIO_PIN_0,idle,0,false,0,&switch2PressAction,&dummy,&switch2PressAction};
+
 void pin_config(void)
 {
 
@@ -42,7 +60,7 @@ void pin_config(void)
 int main(void)
 {
     uint32_t ui32Period;
-    sw1State = idle;
+    sw1.swState = idle;
 
     SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -58,105 +76,30 @@ int main(void)
     TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     IntMasterEnable();
     TimerEnable(TIMER0_BASE, TIMER_A);
-
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, ui8PinData);
     while(1){
         // Turn on the LED
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, ui8PinData);
+//        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, ui8PinData);
         // Delay for a bit
-        DELAY_MS(500);
+//        DELAY_MS(500);
         // Turn off LED
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, 0);
+//        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, 0);
         // Delay
-        DELAY_MS(500);
+//        DELAY_MS(500);
 
     }
     return 0;
 }
-unsigned char detectKey1Press()
-{
-    sw1Activation = !GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4); // Since SW1 is pull-up, negation of value is status, i.e. if pin in HIGH then switch is not pressed
-    if(sw1Activation){
-        flag=1;
-    }
-    else {
-        flag=0;
-    }
-    return flag;
-}
 
-void switch1PressAction(){
-    if(ui8PinData==8) {ui8PinData=2;} else {ui8PinData=ui8PinData*2;}
-}
-void switch1ReleaseAction(){
-}
-//Switch2
-unsigned char detectKey2Press()
-{
-    sw2Activation = !GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_0); // Since SW1 is pull-up, negation of value is status, i.e. if pin in HIGH then switch is not pressed
-    if(sw2Activation){
-        flag=1;
-    }
-    else {
-        flag=0;
-    }
-    return flag;
-}
-void switch2PressAction(){
-    sw2Status++;
-}
-void switch2ReleaseAction(){
-}
+
 void Timer0IntHandler(void)
 {
     // Clear the timer interrupt
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
 
 //    Change SW1 state after looking at key press
-    switch(sw1State){
-    case idle:
-        if(detectKey1Press()){
-            sw1State = press;
-            switch1PressAction();
-        }
-        else
-            sw1State = idle;
-        break;
-    case press:
-            if(detectKey1Press())
-                sw1State = release;
-            else
-                sw1State = idle;
-            break;
-    case release:
-            if(detectKey1Press())
-                sw1State = release;
-            else
-                sw1State = idle;
-            break;
-    }
-
+    transition(&sw1);
 
 //    Change SW2 state after looking at key press
-    switch(sw2State){
-    case idle:
-        if(detectKey2Press()){
-            sw2State = press;
-            switch2PressAction();
-        }
-        else
-            sw2State = idle;
-        break;
-    case press:
-        if(detectKey2Press())
-            sw2State = release;
-        else
-            sw2State = idle;
-        break;
-    case release:
-        if(detectKey2Press())
-            sw2State = release;
-        else
-            sw2State = idle;
-        break;
-    }
+    transition(&sw2);
 }
