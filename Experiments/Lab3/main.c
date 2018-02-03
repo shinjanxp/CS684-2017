@@ -45,7 +45,8 @@ void color();
 //sw sw2 = {2,GPIO_PORTF_BASE,GPIO_PIN_0,idle,0,false,0,&switch2PressAction,&dummy,&switch2PressAction};
 
 int main(void)
+
 {
-    color();
+    servo();
 }
 

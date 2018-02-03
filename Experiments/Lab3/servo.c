@@ -57,9 +57,9 @@ void servo(){
         if(ROM_GPIOPinRead(GPIO_PORTF_BASE,GPIO_PIN_0)==0x00)
         {
             ui8Adjust++;
-            if (ui8Adjust > 111)
+            if (ui8Adjust > 131)
             {
-                ui8Adjust = 111;
+                ui8Adjust = 131;
             }
             ROM_PWMPulseWidthSet(PWM1_BASE, PWM_OUT_0, ui8Adjust * ui32Load / 1000);
         }

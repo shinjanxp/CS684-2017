@@ -25,7 +25,7 @@ void switch1PressAction(sw* s){
 
 }
 void dummy(sw* s){
-    return 0;
+
 }
 void switch1LongPressAction(sw* s){
 
