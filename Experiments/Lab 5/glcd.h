@@ -146,12 +146,12 @@ void glcd_setpage(unsigned char page)
     /* Set CS1 (CS1=1 and CS2=0) The right side is selected(column>64) */
     GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_3,0x00);
     glcd_cmd(0xB8 | page);
-    SysCtlDelay(100);
+    SysCtlDelay(10);
 
     /* Set CS2 (CS2=1 and CS1=0) The right side is selected(column>64) */
     GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_3,0x08);
     glcd_cmd(0xB8 | page);
-    SysCtlDelay(100);
+    SysCtlDelay(10);
 }
 
 
@@ -167,14 +167,14 @@ void glcd_setcolumn(unsigned char column)
         /* Set CS1 (CS1=1 and CS2=0) The right side is selected(column>64) */
         GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_3,0x00);
         glcd_cmd(0x40 | column);
-        SysCtlDelay(6700);
+        SysCtlDelay(10);
     }
     else
     {
         /* Set CS2 (CS2=1 and CS1=0) The right side is selected(column>64) */
         GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_3,0x08);
         glcd_cmd(0x40 | (column-64));
-        SysCtlDelay(6700);
+        SysCtlDelay(10);
     }
 
 }
